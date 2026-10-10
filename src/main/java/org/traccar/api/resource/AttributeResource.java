@@ -19,6 +19,8 @@ package org.traccar.api.resource;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -31,6 +33,8 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 
 import org.traccar.api.ExtendedObjectResource;
+import org.traccar.dashboard.WalletTokenStore;
+import org.traccar.storage.StorageException;
 import org.traccar.model.Attribute;
 import org.traccar.model.Device;
 import org.traccar.model.Position;
@@ -55,10 +59,42 @@ public class AttributeResource extends ExtendedObjectResource<Attribute> {
         super(Attribute.class, "description", List.of("description"));
     }
 
+    @Override
+    protected Condition getFilterCondition() throws StorageException {
+        return permissionsService.notAdmin(getUserId())
+                ? new Condition.Compare("attribute", "<>", WalletTokenStore.ATTRIBUTE_NAME) : null;
+    }
+
+    @Override
+    @Path("{id}")
+    @GET
+    public Response getSingle(@PathParam("id") long id) throws StorageException {
+        permissionsService.checkPermission(Attribute.class, getUserId(), id);
+        var attribute = storage.getObject(Attribute.class, new Request(
+                new Columns.All(), new Condition.Equals("id", id)));
+        if (WalletTokenStore.isTokenAttribute(attribute) && permissionsService.notAdmin(getUserId())) {
+            throw new ForbiddenException();
+        }
+        return attribute != null ? Response.ok(attribute).build() : Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    private void validateWalletToken(Attribute entity) throws StorageException {
+        if (WalletTokenStore.isTokenAttribute(entity)) {
+            WalletTokenStore.parseToken(entity);
+            try (var existing = storage.getObjectsStream(Attribute.class, new Request(
+                    new Columns.All(), new Condition.Equals("attribute", WalletTokenStore.ATTRIBUTE_NAME)))) {
+                if (existing.anyMatch(attribute -> attribute.getId() != entity.getId())) {
+                    throw new IllegalArgumentException("Only one wallet_token computed attribute is allowed");
+                }
+            }
+        }
+    }
+
     @POST
     @Path("test")
     public Response test(@QueryParam("deviceId") long deviceId, Attribute entity) throws Exception {
         permissionsService.checkAdmin(getUserId());
+        validateWalletToken(entity);
         permissionsService.checkPermission(Device.class, getUserId(), deviceId);
 
         Position position = storage.getObject(Position.class, new Request(
@@ -85,6 +121,7 @@ public class AttributeResource extends ExtendedObjectResource<Attribute> {
     @POST
     public Response add(Attribute entity) throws Exception {
         permissionsService.checkAdmin(getUserId());
+        validateWalletToken(entity);
         return super.add(entity);
     }
 
@@ -92,6 +129,7 @@ public class AttributeResource extends ExtendedObjectResource<Attribute> {
     @PUT
     public Response update(Attribute entity) throws Exception {
         permissionsService.checkAdmin(getUserId());
+        validateWalletToken(entity);
         return super.update(entity);
     }
 

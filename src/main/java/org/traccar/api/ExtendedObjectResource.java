@@ -43,6 +43,10 @@ public class ExtendedObjectResource<T extends BaseModel> extends BaseObjectResou
         this.searchColumns = searchColumns;
     }
 
+    protected Condition getFilterCondition() throws StorageException {
+        return null;
+    }
+
     @GET
     public Stream<T> get(
             @QueryParam("all") boolean all, @QueryParam("userId") long userId,
@@ -52,6 +56,10 @@ public class ExtendedObjectResource<T extends BaseModel> extends BaseObjectResou
             @QueryParam("keyword") String keyword) throws StorageException {
 
         var conditions = new LinkedList<Condition>();
+        var filter = getFilterCondition();
+        if (filter != null) {
+            conditions.add(filter);
+        }
 
         if (all) {
             if (permissionsService.notAdmin(getUserId())) {

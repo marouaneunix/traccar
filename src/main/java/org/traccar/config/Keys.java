@@ -22,6 +22,14 @@ public final class Keys {
     private Keys() {
     }
 
+    /** Wallet API token. Keep this in server configuration or environment variables, never device attributes. */
+    public static final ConfigKey<String> WALLET_TOKEN = new StringConfigKey(
+            "wallet.token", List.of(KeyType.CONFIG));
+
+    /** Cache complete Wallet responses for this many seconds. */
+    public static final ConfigKey<Integer> WALLET_CACHE_SECONDS = new IntegerConfigKey(
+            "wallet.cacheSeconds", List.of(KeyType.CONFIG), 300);
+
     /**
      * Network interface for the protocol. If not specified, the server will bind to all interfaces.
      */

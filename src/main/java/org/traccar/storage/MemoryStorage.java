@@ -76,6 +76,7 @@ public class MemoryStorage extends Storage {
                 case ">" -> result > 0;
                 case ">=" -> result >= 0;
                 case "=" -> result == 0;
+                case "<>", "!=" -> result != 0;
                 default -> throw new RuntimeException("Unsupported comparison condition");
             };
 

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(java -jar target/tracker-server.jar debug.xml)",
+      "Bash(./mock_device.sh mock-device-001:*)",
+      "Bash(git restore:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git reset:*)"
+    ]
+  }
+}

@@ -73,7 +73,103 @@ tags:
     description: Checking server health status
   - name: Orders
     description: Order management
+  - name: Dashboard
+    description: Taxi dashboard financial integration (administrator only)
 paths:
+  /dashboard/wallet/status:
+    get:
+      summary: Get Wallet dashboard connection status
+      description: Administrator only. Reads the selected device's accountId string attribute and returns its connection status without exposing the token.
+      tags: [Dashboard]
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Connection metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configured:
+                    type: boolean
+                  tokenConfigured:
+                    type: boolean
+                  deviceId:
+                    type: integer
+                  accountId:
+                    type: string
+        '401':
+          description: Authentication required
+        '403':
+          description: Administrator access required or reports disabled
+        '400':
+          description: Invalid device ID
+        '404':
+          description: Device not found
+  /dashboard/wallet:
+    get:
+      summary: Get all Wallet records for the linked taxi and date range
+      description: Administrator only. Reads the selected device's accountId attribute, caches complete responses per account, and accepts periods up to 366 days.
+      tags: [Dashboard]
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Complete account records and synchronization metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accountId:
+                    type: string
+                  records:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  fetchedAt:
+                    type: string
+                    format: date-time
+                  lastDataChangeAt:
+                    type: [string, 'null']
+                  syncInProgress:
+                    type: boolean
+        '400':
+          description: Invalid period or missing accountId device attribute
+        '401':
+          description: Authentication required
+        '403':
+          description: Administrator access required or reports disabled
+        '404':
+          description: Device not found
+        '429':
+          description: Wallet rate limit reached (Retry-After header provided)
+        '502':
+          description: Wallet authentication, synchronization, or upstream error
+        '503':
+          description: Wallet integration is not configured
   /health:
     get:
       summary: Check server health

@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.traccar.config.Config;
 import org.traccar.config.Keys;
+import org.traccar.dashboard.WalletTokenStore;
 import org.traccar.helper.ReflectionCache;
 import org.traccar.model.Attribute;
 import org.traccar.model.Device;
@@ -150,6 +151,7 @@ public class ComputedAttributesHandler extends BasePositionHandler {
     @Override
     public void onPosition(Position position, Callback callback) {
         var attributes = cacheManager.getDeviceObjects(position.getDeviceId(), Attribute.class).stream()
+                .filter(attribute -> !WalletTokenStore.isTokenAttribute(attribute))
                 .filter(attribute -> attribute.getPriority() < 0 == early)
                 .sorted(Comparator.comparing(Attribute::getPriority).reversed())
                 .toList();
