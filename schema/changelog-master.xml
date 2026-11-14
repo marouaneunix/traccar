@@ -37,4 +37,6 @@
   <include file="changelog-6.11.0.xml" relativeToChangelogFile="true" />
   <include file="changelog-6.13.0.xml" relativeToChangelogFile="true" />
 
+  <include file="changelog-wallet-dashboard.xml" relativeToChangelogFile="true" />
+
 </databaseChangeLog>
